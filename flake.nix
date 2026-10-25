@@ -1,5 +1,5 @@
 {
-  description = "Replant Swamp Trees - Fabric mod development environment";
+  description = "Serverside mods - Fabric mod development environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -30,7 +30,6 @@
 
           shellHook = ''
             export JAVA_HOME="${pkgs.openjdk25}"
-            export PATH="$PWD/gradle/bin:$PATH"
             export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
               pkgs.libGL
               pkgs.libglvnd
@@ -41,10 +40,9 @@
               pkgs.libxxf86vm
               pkgs.glfw
             ]}:$LD_LIBRARY_PATH"
-            echo "Replant Swamp Trees dev environment"
+            echo "Serverside mods dev environment"
             echo "Java: $(java -version 2>&1 | head -1)"
           '';
         };
-      }
-    );
+      });
 }

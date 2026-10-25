@@ -1,40 +1,28 @@
 # gradle
-
 .gradle/
-gradle
-gradlew
 build/
 out/
 classes/
 
-# eclipse
-
-*.launch
-
-# idea
-
+# ide
 .idea/
 *.iml
 *.ipr
 *.iws
-
-# vscode
-
 .settings/
 .vscode/
 bin/
 .classpath
 .project
-
-# macos
-
-*.DS_Store
+*.launch
 
 # fabric
-
 run/
 
 # nix
-
 .direnv/
 result
+
+# misc
+*.DS_Store
+*.log

@@ -9,7 +9,7 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -24,8 +24,8 @@ public class SwampFromSaplings {
         ),
         ordinal = 1
     )
-    private ResourceKey<ConfiguredFeature<?, ?>> replaceOakWithSwampOak(
-            ResourceKey<ConfiguredFeature<?, ?>> tree,
+    private ResourceKey<Feature> replaceOakWithSwampOak(
+            ResourceKey<Feature> tree,
             ServerLevel level, ChunkGenerator chunkGenerator, BlockPos pos, BlockState state, RandomSource random
     ) {
         if (isOakVariant(tree)) {
@@ -37,7 +37,7 @@ public class SwampFromSaplings {
         return tree;
     }
 
-    private static boolean isOakVariant(ResourceKey<ConfiguredFeature<?, ?>> tree) {
+    private static boolean isOakVariant(ResourceKey<Feature> tree) {
         return tree == TreeFeatures.OAK ||
                tree == TreeFeatures.OAK_BEES_002 ||
                tree == TreeFeatures.OAK_BEES_005 ||

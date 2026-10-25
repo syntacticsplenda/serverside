@@ -1,9 +1,14 @@
-gen:
-    ./gradlew genSources
-
+# Build every mod in the repo
 build:
     ./gradlew build
-    ls build/libs/*.jar
+    find . -path '*/build/libs/*.jar' -not -name '*-sources.jar' -not -name '*-sources-dev.jar'
+
+# Build a single mod, e.g. `just mod ihgm`
+mod mod:
+    ./gradlew ":{{mod}}:build"
+
+gen:
+    ./gradlew genSources
 
 versions:
     firefox "https://fabricmc.net/develop/"
