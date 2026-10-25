@@ -5,7 +5,8 @@
   "mixins": [
     "ContainerMixin",
     "CraftingMenuMixin",
-    "ItemMixin"
+    "ItemMixin",
+    "ServerPlayerMixin"
   ],
   "client": [
     "ScreenMixin",
