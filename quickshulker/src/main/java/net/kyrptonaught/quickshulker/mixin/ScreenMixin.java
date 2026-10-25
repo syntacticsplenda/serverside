@@ -5,15 +5,18 @@ import net.fabricmc.api.Environment;
 import net.kyrptonaught.quickshulker.QuickShulkerMod;
 import net.kyrptonaught.quickshulker.client.ClientUtil;
 import net.kyrptonaught.quickshulker.client.QuickShulkerModClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
-import org.spongepowered.asm.mixin.Final;
+import org.lwjgl.system.MemoryStack;
+import java.nio.DoubleBuffer;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -22,52 +25,53 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 @Environment(EnvType.CLIENT)
 public abstract class ScreenMixin {
     @Shadow
-    protected Slot focusedSlot;
+    protected Slot hoveredSlot;
 
     @Shadow
-    @Final
-    protected ScreenHandler handler;
-
-    @Shadow private boolean cancelNextRelease;
+    protected AbstractContainerMenu menu;
 
     @Inject(method = "init", at = @At("TAIL"))
     private void fixMouse(CallbackInfo ci) {
         if (QuickShulkerMod.lastMouseX != 0 && QuickShulkerMod.lastMouseY != 0) {
-            GLFW.glfwSetCursorPos(MinecraftClient.getInstance().getWindow().getHandle(), QuickShulkerMod.lastMouseX, QuickShulkerMod.lastMouseY);
+            GLFW.glfwSetCursorPos(Minecraft.getInstance().getWindow().handle(), QuickShulkerMod.lastMouseX, QuickShulkerMod.lastMouseY);
             QuickShulkerMod.lastMouseY = 0;
             QuickShulkerMod.lastMouseX = 0;
         }
     }
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-    private void QS$keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    private void QS$keyPressed(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
         if (QuickShulkerMod.getConfig().keybingInInv) {
-            if (QuickShulkerModClient.getKeybinding().matches(keyCode, InputUtil.Type.KEYSYM)) {
-                if (handleTrigger())
-                    cir.setReturnValue(true);
+            if (QuickShulkerModClient.getKeyMapping().matches(keyEvent)) {
+                long window = Minecraft.getInstance().getWindow().handle();
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    DoubleBuffer xPos = stack.mallocDouble(1);
+                    DoubleBuffer yPos = stack.mallocDouble(1);
+                    GLFW.glfwGetCursorPos(window, xPos, yPos);
+                    if (handleTrigger(xPos.get(0), yPos.get(0)))
+                        cir.setReturnValue(true);
+                }
             }
         }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void QS$mousePressed(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
+    private void QS$mousePressed(MouseButtonEvent mouseButtonEvent, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
         if (QuickShulkerMod.getConfig().rightClickInv) {
-            if (this.handler.getCursorStack().isEmpty() && button == 1 && this.focusedSlot != null && this.focusedSlot.getStack().getCount() == 1) {
-                if (handleTrigger()) {
-                    this.cancelNextRelease = true;
+            if (this.menu.getCarried().isEmpty() && mouseButtonEvent.button() == 1 && this.hoveredSlot != null && this.hoveredSlot.getItem().getCount() == 1) {
+                if (handleTrigger(mouseButtonEvent.x(), mouseButtonEvent.y())) {
                     cir.setReturnValue(true);
                     return;
                 }
             }
         }
         if (QuickShulkerMod.getConfig().keybingInInv) {
-            if (QuickShulkerModClient.getKeybinding().matches(button, InputUtil.Type.MOUSE)) {
-                if (handleTrigger()) {
-                    this.cancelNextRelease = true;
+            if (QuickShulkerModClient.getKeyMapping().matchesMouse(mouseButtonEvent)) {
+                if (handleTrigger(mouseButtonEvent.x(), mouseButtonEvent.y())) {
                     cir.setReturnValue(true);
                     return;
                 }
@@ -76,19 +80,19 @@ public abstract class ScreenMixin {
     }
 
     @Unique
-    private boolean handleTrigger() {
-        if (this.focusedSlot != null) {
-            return isValid(this.focusedSlot.getStack(), ClientUtil.getSlotId(handler, this.focusedSlot));
+    private boolean handleTrigger(double mouseX, double mouseY) {
+        if (this.hoveredSlot != null) {
+            return isValid(this.hoveredSlot.getItem(), ClientUtil.getSlotId(this.menu, this.hoveredSlot), mouseX, mouseY);
         }
         return false;
     }
 
     @Unique
-    private boolean isValid(ItemStack stack, int id) {
-        if (this.focusedSlot.inventory instanceof PlayerInventory)
+    private boolean isValid(ItemStack stack, int id, double mouseX, double mouseY) {
+        if (this.hoveredSlot.container instanceof Inventory)
             if (ClientUtil.CheckAndSend(stack, id)) {
-                QuickShulkerMod.lastMouseX = MinecraftClient.getInstance().mouse.getX();
-                QuickShulkerMod.lastMouseY = MinecraftClient.getInstance().mouse.getY();
+                QuickShulkerMod.lastMouseX = mouseX;
+                QuickShulkerMod.lastMouseY = mouseY;
                 return true;
             }
         return false;

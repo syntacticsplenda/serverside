@@ -1,73 +1,77 @@
 plugins {
-	id 'fabric-loom' version '1.1-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
-
-archivesBaseName = project.archives_base_name
-version = project.mod_version
+version = project.mod_version + "+mc" + project.minecraft_version
 group = project.maven_group
 
+base {
+	archivesName = project.archives_base_name
+}
 
 loom {
 	accessWidenerPath = file("src/main/resources/quickshulker.accesswidener")
+
+	mods {
+		"quickshulker" {
+			sourceSet sourceSets.main
+		}
+	}
 }
 
 repositories {
-	maven { url 'https://maven.fabricmc.net' }
-	maven { url 'https://maven.kyrptonaught.dev' }
-	maven { url "https://maven.terraformersmc.com/releases" }
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	modImplementation include("net.kyrptonaught:kyrptconfig:1.5.2-1.19.4") { exclude group: "net.fabricmc.fabric-api" }
+	// Fabric API, used for events, networking, transfer, and key mapping registration.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	//update modmenu when kyrptconfig is pulling old version
-	modImplementation ("com.terraformersmc:modmenu:6.1.0-rc.1"){
-		transitive(false)
+	// LWJGL for GLFW key and cursor access, provided by the game at runtime.
+	compileOnly "org.lwjgl:lwjgl:3.4.3"
+	compileOnly "org.lwjgl:lwjgl-glfw:3.4.3"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
 	}
-
-	//shulkerutils
-	modImplementation 'net.kyrptonaught:shulkerutils:1.0.4-1.19'
-	include 'net.kyrptonaught:shulkerutils:1.0.4-1.19'
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = 25
 }
 
 java {
 	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
+	def archivesName = project.base.archivesName.get()
+	inputs.property "archivesName", archivesName
+
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}" }
+		rename { "${it}_${archivesName}"}
 	}
 }
 
-// configure the maven publication
 publishing {
 	publications {
-		mavenJava(MavenPublication) {
-			artifactId archivesBaseName
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
 			from components.java
 		}
 	}
+
 	repositories {
-		maven {
-			url ='s3://maven.kyrptonaught.dev'
-			credentials(AwsCredentials) {
-				accessKey = System.getenv('maven-key-id')
-				secretKey = System.getenv('maven-key')
-			}
-		}
 	}
 }
