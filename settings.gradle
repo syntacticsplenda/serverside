@@ -11,4 +11,4 @@ pluginManagement {
 
 rootProject.name = 'serverside'
 
-include 'blastproof-netherite', 'ihgm', 'replant-swamp-trees'
+include 'blastproof-netherite', 'ihgm', 'replant-swamp-trees', 'quickshulker'
