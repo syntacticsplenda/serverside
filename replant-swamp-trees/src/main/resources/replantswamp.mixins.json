@@ -1,0 +1,14 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "net.rutrum.replantswamp.mixin",
+    "compatibilityLevel": "JAVA_25",
+    "mixins": [
+        "SwampFromSaplings"
+    ],
+    "client": [],
+    "server": [],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "replantswamp",
+  "version": "${version}",
+
+  "name": "Replant Swamp Trees",
+  "description": "Generates swamp trees instead of oak when planting oak saplings in a swamp or mangrove biome.",
+  "authors": [
+    "rutrum"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": "https://github.com/rutrum/replant-swamp-trees"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/replantswamp/icon.png",
+
+  "environment": "*",
+  "mixins": [
+    "replantswamp.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": ">=26.1",
+    "java": ">=25"
+  }
+}
